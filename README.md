@@ -18,9 +18,12 @@ Inventory Feature for QBCore Inventorynp And inspired by NoPixel 4.0.
 ## Screenshots
 ![Group 5763](https://github.com/P4ScriptsFivem/pappu-inventorynp/assets/120780563/b6316433-209f-413d-882e-91eee080f6fa)
 
-# Installation
+# Installation (Latest QBCore Update)
 Manual
 * Download `pappu-inventorynp` from our GitHub
+* Make sure you have the latest update of [qb-core](https://github.com/qbcore-framework/qb-core)
+* Make sure you have the latest update of [qb-smallresources](https://github.com/qbcore-framework/qb-smallresources)
+* Make sure you have the latest update of [qb-weapons](https://github.com/qbcore-framework/qb-weapons)
 * Drag `pappu-inventorynp` into your resources folder or any subfolder
 * Make sure that the folder is named `pappu-inventorynp` and **not** `pappu-inventorynp-main`
 * Replace all occurrences of `qb-inventory` with `pappu-inventorynp`.<br>The example below uses Visual Studio Code to replace all instances.
