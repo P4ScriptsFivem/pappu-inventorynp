@@ -1,3 +1,5 @@
+-- Variables
+
 local QBCore = exports['qb-core']:GetCoreObject()
 local Drops = {}
 local Trunks = {}
@@ -5,10 +7,9 @@ local Gloveboxes = {}
 local Stashes = {}
 local ShopItems = {}
 
-function GetDrops()
-    return Drops
-end
+-- Functions
 
+---Loads the inventory for the player with the citizenid that is provided
 
 local function LoadInventory(source, citizenid)
     local inventory = MySQL.prepare.await('SELECT inventory FROM players WHERE citizenid = ?', { citizenid })
@@ -56,6 +57,8 @@ end
 
 exports("LoadInventory", LoadInventory)
 
+---Saves the inventory for the player with the provided source or PlayerData is they're offline
+
 local function SaveInventory(source, offline)
 	local PlayerData
 	if not offline then
@@ -70,7 +73,8 @@ local function SaveInventory(source, offline)
 
     local items = PlayerData.items
     local ItemsJson = {}
-    if items and table.type(items) ~= "empty" then        for slot, item in pairs(items) do
+    if items and table.type(items) ~= "empty" then
+        for slot, item in pairs(items) do
             if items[slot] then
                 ItemsJson[#ItemsJson+1] = {
                     name = item.name,
@@ -89,6 +93,8 @@ local function SaveInventory(source, offline)
 end
 
 exports("SaveInventory", SaveInventory)
+
+---Gets the totalweight of the items provided
 
 local function GetTotalWeight(items)
 	local weight = 0
@@ -116,6 +122,8 @@ end
 
 exports("GetSlotsByItem", GetSlotsByItem)
 
+---Get the first slot where the item is located
+
 local function GetFirstSlotByItem(items, itemName)
     if not items then return nil end
     for slot, item in pairs(items) do
@@ -128,6 +136,7 @@ end
 
 exports("GetFirstSlotByItem", GetFirstSlotByItem)
 
+---Add an item to the inventory of the player
 
 local function AddItem(source, item, amount, slot, info, created)
 	local Player = QBCore.Functions.GetPlayer(source)
@@ -137,11 +146,6 @@ local function AddItem(source, item, amount, slot, info, created)
 	local totalWeight = GetTotalWeight(Player.PlayerData.items)
 	local itemInfo = QBCore.Shared.Items[item:lower()]
 	local time = os.time()
-	if not created then
-		itemInfo['created'] = time
-	else
-		itemInfo['created'] = created
-	end
 	if not itemInfo and not Player.Offline then
 		QBCore.Functions.Notify(source, "Item does not exist", 'error')
 		return false
@@ -207,6 +211,8 @@ end
 
 exports("AddItem", AddItem)
 
+---Remove an item from the inventory of the player
+
 local function RemoveItem(source, item, amount, slot)
 	local Player = QBCore.Functions.GetPlayer(source)
 
@@ -268,6 +274,8 @@ end
 
 exports("RemoveItem", RemoveItem)
 
+---Get the item with the slot
+
 local function GetItemBySlot(source, slot)
 	local Player = QBCore.Functions.GetPlayer(source)
 	slot = tonumber(slot)
@@ -275,6 +283,8 @@ local function GetItemBySlot(source, slot)
 end
 
 exports("GetItemBySlot", GetItemBySlot)
+
+---Get the item from the inventory of the player with the provided source by the name of the item
 
 local function GetItemByName(source, item)
 	local Player = QBCore.Functions.GetPlayer(source)
@@ -284,6 +294,8 @@ local function GetItemByName(source, item)
 end
 
 exports("GetItemByName", GetItemByName)
+
+---Get the item from the inventory of the player with the provided source by the name of the item in an array for all slots that the item is in
 
 local function GetItemsByName(source, item)
 	local Player = QBCore.Functions.GetPlayer(source)
@@ -333,6 +345,8 @@ end
 
 exports("ClearInventory", ClearInventory)
 
+---Sets the items playerdata to the provided items param
+
 local function SetInventory(source, items)
 	local Player = QBCore.Functions.GetPlayer(source)
 
@@ -344,6 +358,8 @@ local function SetInventory(source, items)
 end
 
 exports("SetInventory", SetInventory)
+
+---Set the data of a specific item
 
 local function SetItemData(source, itemName, key, val)
 	if not itemName or not key then return false end
@@ -365,6 +381,7 @@ end
 
 exports("SetItemData", SetItemData)
 
+---Checks if you have an item or not
 local function HasItem(source, items, amount)
     local Player = QBCore.Functions.GetPlayer(source)
     if not Player then return false end
@@ -400,6 +417,7 @@ end
 
 exports("HasItem", HasItem)
 
+---Create a usable item with a callback on use
 ---@param itemName string The name of the item to make usable
 ---@param data any
 local function CreateUsableItem(itemName, data)
@@ -408,6 +426,7 @@ end
 
 exports("CreateUsableItem", CreateUsableItem)
 
+---Get the usable item data for the specified item
 ---@param itemName string The item to get the data for
 ---@return any usable_item
 local function GetUsableItem(itemName)
@@ -416,6 +435,7 @@ end
 
 exports("GetUsableItem", GetUsableItem)
 
+---Use an item from the QBCore.UsableItems table if a callback is present
 ---@param itemName string The name of the item to use
 ---@param ... any Arguments for the callback, this will be sent to the callback and can be used to get certain values
 local function UseItem(itemName, ...)
@@ -879,10 +899,7 @@ local function AddToDrop(dropId, slot, itemName, amount, info, created)
 			id = dropId,
 		}
 	end
-
-	-- OnDropUpdate(dropId, Drops[dropId])
 end
-
 
 local function RemoveFromDrop(dropId, slot, itemName, amount)
 	amount = tonumber(amount) or 1
@@ -899,8 +916,6 @@ local function RemoveFromDrop(dropId, slot, itemName, amount)
 			Drops[dropId].items[slot] = nil
 		end
 	end
-	
-	-- OnDropUpdate(dropId, Drops[dropId])
 end
 
 local function CreateDropId()
@@ -928,7 +943,7 @@ local function CreateNewDrop(source, fromSlot, toSlot, itemAmount, created)
 
 	local coords = GetEntityCoords(GetPlayerPed(source))
 	if RemoveItem(source, itemData.name, itemAmount, itemData.slot) then
-		TriggerClientEvent("inventory:client:CheckWeapon", source, itemData.name)
+		TriggerClientEvent("pappu-inventorynp:client:CheckWeapon", source, itemData.name)
 		local itemInfo = QBCore.Shared.Items[itemData.name:lower()]
 		local dropId = CreateDropId()
 		Drops[dropId] = {}
@@ -953,14 +968,11 @@ local function CreateNewDrop(source, fromSlot, toSlot, itemAmount, created)
 			id = dropId,
 		}
 		TriggerEvent("qb-log:server:CreateLog", "drop", "New Item Drop", "red", "**".. GetPlayerName(source) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..source.."*) dropped new item; name: **"..itemData.name.."**, amount: **" .. itemAmount .. "**")
-		TriggerClientEvent("inventory:client:DropItemAnim", source)
-		TriggerClientEvent("inventory:client:AddDropItem", -1, dropId, source, coords)
+		TriggerClientEvent("pappu-inventorynp:client:DropItemAnim", source)
+		TriggerClientEvent("pappu-inventorynp:client:AddDropItem", -1, dropId, source, coords)
 		if itemData.name:lower() == "radio" then
 			TriggerClientEvent('Radio.Set', source, false)
 		end
-
-		
-		-- OnDropUpdate(dropId, Drops[dropId])
 	else
 		TriggerClientEvent("QBCore:Notify", source, "You don't have this item!", "error")
 		return
@@ -981,7 +993,7 @@ local function OpenInventory(name, id, other, origin)
 				if Stashes[id].isOpen then
 					local Target = QBCore.Functions.GetPlayer(Stashes[id].isOpen)
 					if Target then
-						TriggerClientEvent('inventory:client:CheckOpenState', Stashes[id].isOpen, name, id, Stashes[id].label)
+						TriggerClientEvent('pappu-inventorynp:client:CheckOpenState', Stashes[id].isOpen, name, id, Stashes[id].label)
 					else
 						Stashes[id].isOpen = false
 					end
@@ -1024,7 +1036,7 @@ local function OpenInventory(name, id, other, origin)
 				if Trunks[id].isOpen then
 					local Target = QBCore.Functions.GetPlayer(Trunks[id].isOpen)
 					if Target then
-						TriggerClientEvent('inventory:client:CheckOpenState', Trunks[id].isOpen, name, id, Trunks[id].label)
+						TriggerClientEvent('pappu-inventorynp:client:CheckOpenState', Trunks[id].isOpen, name, id, Trunks[id].label)
 					else
 						Trunks[id].isOpen = false
 					end
@@ -1067,7 +1079,7 @@ local function OpenInventory(name, id, other, origin)
 				if Gloveboxes[id].isOpen then
 					local Target = QBCore.Functions.GetPlayer(Gloveboxes[id].isOpen)
 					if Target then
-						TriggerClientEvent('inventory:client:CheckOpenState', Gloveboxes[id].isOpen, name, id, Gloveboxes[id].label)
+						TriggerClientEvent('pappu-inventorynp:client:CheckOpenState', Gloveboxes[id].isOpen, name, id, Gloveboxes[id].label)
 					else
 						Gloveboxes[id].isOpen = false
 					end
@@ -1148,7 +1160,7 @@ local function OpenInventory(name, id, other, origin)
 				if Drops[id].isOpen then
 					local Target = QBCore.Functions.GetPlayer(Drops[id].isOpen)
 					if Target then
-						TriggerClientEvent('inventory:client:CheckOpenState', Drops[id].isOpen, name, id, Drops[id].label)
+						TriggerClientEvent('pappu-inventorynp:client:CheckOpenState', Drops[id].isOpen, name, id, Drops[id].label)
 					else
 						Drops[id].isOpen = false
 					end
@@ -1172,10 +1184,10 @@ local function OpenInventory(name, id, other, origin)
 				secondInv.slots = 0
 			end
 		end
-		TriggerClientEvent("lj-inventory:client:closeinv", id)
-		TriggerClientEvent("inventory:client:OpenInventory", src, {}, Player.PlayerData.items, secondInv)
+		TriggerClientEvent("pappu-inventorynp:client:closeinv", id)
+		TriggerClientEvent("pappu-inventorynp:client:OpenInventory", src, {}, Player.PlayerData.items, secondInv)
 	else
-		TriggerClientEvent("inventory:client:OpenInventory", src, {}, Player.PlayerData.items)
+		TriggerClientEvent("pappu-inventorynp:client:OpenInventory", src, {}, Player.PlayerData.items)
 	end
 end
 exports('OpenInventory',OpenInventory)
@@ -1265,7 +1277,7 @@ end
 
 exports('addGloveboxItems',addGloveboxItems)
 
-RegisterNetEvent('inventory:server:combineItem', function(item, fromItem, toItem)
+RegisterNetEvent('pappu-inventorynp:server:combineItem', function(item, fromItem, toItem)
 	local src = source
 
 	-- Check that inputs are not nil
@@ -1286,13 +1298,13 @@ RegisterNetEvent('inventory:server:combineItem', function(item, fromItem, toItem
 	if recipe and recipe.reward ~= item then return end
 	if not recipeContains(recipe, fromItem) then return end
 
-	TriggerClientEvent('inventory:client:ItemBox', src, QBCore.Shared.Items[item], 'add')
+	TriggerClientEvent('pappu-inventorynp:client:ItemBox', src, QBCore.Shared.Items[item], 'add')
 	AddItem(src, item, 1)
 	RemoveItem(src, fromItem.name, 1)
 	RemoveItem(src, toItem.name, 1)
 end)
 
-RegisterNetEvent('inventory:server:CraftItems', function(itemName, itemCosts, amount, toSlot, points)
+RegisterNetEvent('pappu-inventorynp:server:CraftItems', function(itemName, itemCosts, amount, toSlot, points)
 	local src = source
 	local Player = QBCore.Functions.GetPlayer(src)
 
@@ -1305,10 +1317,10 @@ RegisterNetEvent('inventory:server:CraftItems', function(itemName, itemCosts, am
 	end
 	AddItem(src, itemName, amount, toSlot)
 	Player.Functions.SetMetaData("craftingrep", Player.PlayerData.metadata["craftingrep"] + (points * amount))
-	TriggerClientEvent("inventory:client:UpdatePlayerInventory", src, false)
+	TriggerClientEvent("pappu-inventorynp:client:UpdatePlayerInventory", src, false)
 end)
 
-RegisterNetEvent('inventory:server:CraftAttachment', function(itemName, itemCosts, amount, toSlot, points)
+RegisterNetEvent('pappu-inventorynp:server:CraftAttachment', function(itemName, itemCosts, amount, toSlot, points)
 	local src = source
 	local Player = QBCore.Functions.GetPlayer(src)
 
@@ -1317,14 +1329,14 @@ RegisterNetEvent('inventory:server:CraftAttachment', function(itemName, itemCost
 	if not itemName or not itemCosts then return end
 
 	for k, v in pairs(itemCosts) do
-		RemoveItem(src, k, (v * amount))
+		RemoveItem(src, k, (v*amount))
 	end
 	AddItem(src, itemName, amount, toSlot)
-	Player.Functions.SetMetaData('attachmentcraftingrep', Player.PlayerData.metadata['attachmentcraftingrep'] + (points * amount))
-	TriggerClientEvent('inventory:client:UpdatePlayerInventory', src, false)
+	Player.Functions.SetMetaData("attachmentcraftingrep", Player.PlayerData.metadata["attachmentcraftingrep"] + (points * amount))
+	TriggerClientEvent("pappu-inventorynp:client:UpdatePlayerInventory", src, false)
 end)
 
-RegisterNetEvent('inventory:server:SetIsOpenState', function(IsOpen, type, id)
+RegisterNetEvent('pappu-inventorynp:server:SetIsOpenState', function(IsOpen, type, id)
 	if IsOpen then return end
 
 	if type == "stash" then
@@ -1338,7 +1350,7 @@ RegisterNetEvent('inventory:server:SetIsOpenState', function(IsOpen, type, id)
 	end
 end)
 
-RegisterNetEvent('inventory:server:OpenInventory', function(name, id, other)
+RegisterNetEvent('pappu-inventorynp:server:OpenInventory', function(name, id, other)
 		local src = source
 		local ply = Player(src)
 		local Player = QBCore.Functions.GetPlayer(src)
@@ -1352,7 +1364,7 @@ RegisterNetEvent('inventory:server:OpenInventory', function(name, id, other)
 					if Stashes[id].isOpen then
 						local Target = QBCore.Functions.GetPlayer(Stashes[id].isOpen)
 						if Target then
-							TriggerClientEvent('inventory:client:CheckOpenState', Stashes[id].isOpen, name, id, Stashes[id].label)
+							TriggerClientEvent('pappu-inventorynp:client:CheckOpenState', Stashes[id].isOpen, name, id, Stashes[id].label)
 						else
 							Stashes[id].isOpen = false
 						end
@@ -1395,7 +1407,7 @@ RegisterNetEvent('inventory:server:OpenInventory', function(name, id, other)
 					if Trunks[id].isOpen then
 						local Target = QBCore.Functions.GetPlayer(Trunks[id].isOpen)
 						if Target then
-							TriggerClientEvent('inventory:client:CheckOpenState', Trunks[id].isOpen, name, id, Trunks[id].label)
+							TriggerClientEvent('pappu-inventorynp:client:CheckOpenState', Trunks[id].isOpen, name, id, Trunks[id].label)
 						else
 							Trunks[id].isOpen = false
 						end
@@ -1438,7 +1450,7 @@ RegisterNetEvent('inventory:server:OpenInventory', function(name, id, other)
 					if Gloveboxes[id].isOpen then
 						local Target = QBCore.Functions.GetPlayer(Gloveboxes[id].isOpen)
 						if Target then
-							TriggerClientEvent('inventory:client:CheckOpenState', Gloveboxes[id].isOpen, name, id, Gloveboxes[id].label)
+							TriggerClientEvent('pappu-inventorynp:client:CheckOpenState', Gloveboxes[id].isOpen, name, id, Gloveboxes[id].label)
 						else
 							Gloveboxes[id].isOpen = false
 						end
@@ -1519,7 +1531,7 @@ RegisterNetEvent('inventory:server:OpenInventory', function(name, id, other)
 					if Drops[id].isOpen then
 						local Target = QBCore.Functions.GetPlayer(Drops[id].isOpen)
 						if Target then
-							TriggerClientEvent('inventory:client:CheckOpenState', Drops[id].isOpen, name, id, Drops[id].label)
+							TriggerClientEvent('pappu-inventorynp:client:CheckOpenState', Drops[id].isOpen, name, id, Drops[id].label)
 						else
 							Drops[id].isOpen = false
 						end
@@ -1543,14 +1555,14 @@ RegisterNetEvent('inventory:server:OpenInventory', function(name, id, other)
 					secondInv.slots = 0
 				end
 			end
-			TriggerClientEvent("lj-inventory:client:closeinv", id)
-			TriggerClientEvent("inventory:client:OpenInventory", src, {}, Player.PlayerData.items, secondInv)
+			TriggerClientEvent("pappu-inventorynp:client:closeinv", id)
+			TriggerClientEvent("pappu-inventorynp:client:OpenInventory", src, {}, Player.PlayerData.items, secondInv)
 		else
-			TriggerClientEvent("inventory:client:OpenInventory", src, {}, Player.PlayerData.items)
+			TriggerClientEvent("pappu-inventorynp:client:OpenInventory", src, {}, Player.PlayerData.items)
 	end
 end)
 
-RegisterNetEvent('inventory:server:SaveInventory', function(type, id)
+RegisterNetEvent('pappu-inventorynp:server:SaveInventory', function(type, id)
 	if type == "trunk" then
 		if IsVehicleOwned(id) then
 			SaveOwnedVehicleItems(id, Trunks[id].items)
@@ -1570,13 +1582,13 @@ RegisterNetEvent('inventory:server:SaveInventory', function(type, id)
 			Drops[id].isOpen = false
 			if Drops[id].items == nil or next(Drops[id].items) == nil then
 				Drops[id] = nil
-				TriggerClientEvent("inventory:client:RemoveDropItem", -1, id)
+				TriggerClientEvent("pappu-inventorynp:client:RemoveDropItem", -1, id)
 			end
 		end
 	end
 end)
 
-RegisterNetEvent('inventory:server:UseItemSlot', function(slot)
+RegisterNetEvent('pappu-inventorynp:server:UseItemSlot', function(slot)
 	local src = source
 	local Player = QBCore.Functions.GetPlayer(src)
 	local itemData = Player.Functions.GetItemBySlot(slot)
@@ -1585,35 +1597,35 @@ RegisterNetEvent('inventory:server:UseItemSlot', function(slot)
 	if itemData.type == "weapon" then
 			if itemData.info.quality then
 				if itemData.info.quality > 0 then
-					TriggerClientEvent("inventory:client:UseWeapon", src, itemData, true)
+					TriggerClientEvent("pappu-inventorynp:client:UseWeapon", src, itemData, true)
 				else
-					TriggerClientEvent("inventory:client:UseWeapon", src, itemData, false)
+					TriggerClientEvent("pappu-inventorynp:client:UseWeapon", src, itemData, false)
 				end
 			else
-				TriggerClientEvent("inventory:client:UseWeapon", src, itemData, true)
+				TriggerClientEvent("pappu-inventorynp:client:UseWeapon", src, itemData, true)
 			end
-		TriggerClientEvent('inventory:client:ItemBox', src, itemInfo, "use")
+		TriggerClientEvent('pappu-inventorynp:client:ItemBox', src, itemInfo, "use")
 	elseif itemData.useable then
 			if itemData.info.quality then
 				if itemData.info.quality > 0 then
 		UseItem(itemData.name, src, itemData)
-		TriggerClientEvent('inventory:client:ItemBox', src, itemInfo, "use")
+		TriggerClientEvent('pappu-inventorynp:client:ItemBox', src, itemInfo, "use")
 				else
 					if itemInfo['delete'] and RemoveItem(src,itemData.name,1,slot) then
-						TriggerClientEvent('inventory:client:ItemBox',src, itemInfo, "remove")
+						TriggerClientEvent('pappu-inventorynp:client:ItemBox',src, itemInfo, "remove")
 					else
 						TriggerClientEvent("QBCore:Notify", src, "You can't use this item", "error")
 					end
 				end
 			else
 				UseItem(itemData.name, src, itemData)
-				TriggerClientEvent('inventory:client:ItemBox', src, itemInfo, "use")
+				TriggerClientEvent('pappu-inventorynp:client:ItemBox', src, itemInfo, "use")
 			end
 		end
 	end
 end)
 
-RegisterNetEvent('inventory:server:UseItem', function(inventory, item)
+RegisterNetEvent('pappu-inventorynp:server:UseItem', function(inventory, item)
 	local src = source
 	local Player = QBCore.Functions.GetPlayer(src)
 	if inventory == "player" or inventory == "hotbar" then
@@ -1625,7 +1637,7 @@ RegisterNetEvent('inventory:server:UseItem', function(inventory, item)
 					if itemData.info.quality <= 0 then
 						if itemInfo['delete'] and RemoveItem(src,itemData.name,1,item.slot) then
 							TriggerClientEvent("QBCore:Notify", src, "You can't use this item", "error")
-							TriggerClientEvent('inventory:client:ItemBox',src, itemInfo, "remove")
+							TriggerClientEvent('pappu-inventorynp:client:ItemBox',src, itemInfo, "remove")
 							return
 	else
 							TriggerClientEvent("QBCore:Notify", src, "You can't use this item", "error")
@@ -1635,12 +1647,12 @@ RegisterNetEvent('inventory:server:UseItem', function(inventory, item)
 				end
 			end
 		UseItem(itemData.name, src, itemData)
-		TriggerClientEvent('inventory:client:ItemBox', src, itemInfo, "use")
+		TriggerClientEvent('pappu-inventorynp:client:ItemBox', src, itemInfo, "use")
 	end
 	end
 end)
 
-RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, toInventory, fromSlot, toSlot, fromAmount, toAmount)
+RegisterNetEvent('pappu-inventorynp:server:SetInventoryData', function(fromInventory, toInventory, fromSlot, toSlot, fromAmount, toAmount)
 	local src = source
 	local Player = QBCore.Functions.GetPlayer(src)
 	fromSlot = tonumber(fromSlot)
@@ -1657,7 +1669,7 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 			if toInventory == "player" or toInventory == "hotbar" then
 				local toItemData = GetItemBySlot(src, toSlot)
 				RemoveItem(src, fromItemData.name, fromAmount, fromSlot)
-				TriggerClientEvent("inventory:client:CheckWeapon", src, fromItemData.name)
+				TriggerClientEvent("pappu-inventorynp:client:CheckWeapon", src, fromItemData.name)
                 if toItemData ~= nil then
                     local toAmount = tonumber(toAmount) ~= nil and tonumber(toAmount) or toItemData.amount
                     if toItemData.amount >= toAmount then
@@ -1676,7 +1688,7 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 				local toItemData = OtherPlayer.PlayerData.items[toSlot]
                 local itemDataTest = OtherPlayer.Functions.GetItemBySlot(toSlot)
 				RemoveItem(src, fromItemData.name, fromAmount, fromSlot)
-				TriggerClientEvent("inventory:client:CheckWeapon", src, fromItemData.name)
+				TriggerClientEvent("pappu-inventorynp:client:CheckWeapon", src, fromItemData.name)
                 if toItemData ~= nil then
 					local itemInfo = QBCore.Shared.Items[toItemData.name:lower()]
                     local toAmount = tonumber(toAmount) ~= nil and tonumber(toAmount) or toItemData.amount
@@ -1699,7 +1711,7 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 				local plate = QBCore.Shared.SplitStr(toInventory, "-")[2]
 				local toItemData = Trunks[plate].items[toSlot]
 				RemoveItem(src, fromItemData.name, fromAmount, fromSlot)
-				TriggerClientEvent("inventory:client:CheckWeapon", src, fromItemData.name)
+				TriggerClientEvent("pappu-inventorynp:client:CheckWeapon", src, fromItemData.name)
                 if toItemData ~= nil then
 					local itemInfo = QBCore.Shared.Items[toItemData.name:lower()]
                     local toAmount = tonumber(toAmount) ~= nil and tonumber(toAmount) or toItemData.amount
@@ -1722,7 +1734,7 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 				local plate = QBCore.Shared.SplitStr(toInventory, "-")[2]
 				local toItemData = Gloveboxes[plate].items[toSlot]
 				RemoveItem(src, fromItemData.name, fromAmount, fromSlot)
-				TriggerClientEvent("inventory:client:CheckWeapon", src, fromItemData.name)
+				TriggerClientEvent("pappu-inventorynp:client:CheckWeapon", src, fromItemData.name)
                 if toItemData ~= nil then
 					local itemInfo = QBCore.Shared.Items[toItemData.name:lower()]
                     local toAmount = tonumber(toAmount) ~= nil and tonumber(toAmount) or toItemData.amount
@@ -1745,7 +1757,7 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 				local stashId = QBCore.Shared.SplitStr(toInventory, "-")[2]
 				local toItemData = Stashes[stashId].items[toSlot]
 				RemoveItem(src, fromItemData.name, fromAmount, fromSlot)
-				TriggerClientEvent("inventory:client:CheckWeapon", src, fromItemData.name)
+				TriggerClientEvent("pappu-inventorynp:client:CheckWeapon", src, fromItemData.name)
                 if toItemData ~= nil then
 					local itemInfo = QBCore.Shared.Items[toItemData.name:lower()]
                     local toAmount = tonumber(toAmount) ~= nil and tonumber(toAmount) or toItemData.amount
@@ -1772,7 +1784,7 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 				local IsItemValid = exports['qb-traphouse']:CanItemBeSaled(fromItemData.name:lower())
 				if IsItemValid then
 					RemoveItem(src, fromItemData.name, fromAmount, fromSlot)
-					TriggerClientEvent("inventory:client:CheckWeapon", src, fromItemData.name)
+					TriggerClientEvent("pappu-inventorynp:client:CheckWeapon", src, fromItemData.name)
                     if toItemData ~= nil then
 						local itemInfo = QBCore.Shared.Items[toItemData.name:lower()]
                         local toAmount = tonumber(toAmount) ~= nil and tonumber(toAmount) or toItemData.amount
@@ -1802,7 +1814,7 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 				else
 					local toItemData = Drops[toInventory].items[toSlot]
 					RemoveItem(src, fromItemData.name, fromAmount, fromSlot)
-					TriggerClientEvent("inventory:client:CheckWeapon", src, fromItemData.name)
+					TriggerClientEvent("pappu-inventorynp:client:CheckWeapon", src, fromItemData.name)
                     if toItemData ~= nil then
 						local itemInfo = QBCore.Shared.Items[toItemData.name:lower()]
                         local toAmount = tonumber(toAmount) ~= nil and tonumber(toAmount) or toItemData.amount
@@ -1839,7 +1851,7 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 			if toInventory == "player" or toInventory == "hotbar" then
 				local toItemData = GetItemBySlot(src, toSlot)
 				RemoveItem(playerId, itemInfo["name"], fromAmount, fromSlot)
-				TriggerClientEvent("inventory:client:CheckWeapon", OtherPlayer.PlayerData.source, fromItemData.name)
+				TriggerClientEvent("pappu-inventorynp:client:CheckWeapon", OtherPlayer.PlayerData.source, fromItemData.name)
                 if toItemData ~= nil then
 					itemInfo = QBCore.Shared.Items[toItemData.name:lower()]
                     local toAmount = tonumber(toAmount) ~= nil and tonumber(toAmount) or toItemData.amount
@@ -2116,7 +2128,7 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
                 AddItem(src, itemData.name, fromAmount, toSlot, itemData.info)
                 TriggerClientEvent('qb-shops:client:UpdateShop', src, QBCore.Shared.SplitStr(shopType, "_")[2], itemData, fromAmount)
                 QBCore.Functions.Notify(src, itemInfo["label"] .. " bought!", "success")
-                -- exports['ps-mdt']:CreateWeaponInfo(serial, imageurl, notes, owner, weapClass, weapModel)
+                exports['ps-mdt']:CreateWeaponInfo(serial, imageurl, notes, owner, weapClass, weapModel)
                 TriggerEvent("qb-log:server:CreateLog", "shops", "Shop item bought", "green", "**"..GetPlayerName(src) .. "** bought a " .. itemInfo["label"] .. " for $"..price)
         elseif bankBalance >= price then
                 Player.Functions.RemoveMoney("bank", price, "itemshop-bought-item")
@@ -2133,7 +2145,7 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
                 AddItem(src, itemData.name, fromAmount, toSlot, itemData.info)
                 TriggerClientEvent('qb-shops:client:UpdateShop', src, QBCore.Shared.SplitStr(shopType, "_")[2], itemData, fromAmount)
                 QBCore.Functions.Notify(src, itemInfo["label"] .. " bought!", "success")
-				-- exports['ps-mdt']:CreateWeaponInfo(serial, imageurl, notes, owner, weapClass, weapModel)
+				exports['ps-mdt']:CreateWeaponInfo(serial, imageurl, notes, owner, weapClass, weapModel)
                 TriggerEvent("qb-log:server:CreateLog", "shops", "Shop item bought", "green", "**"..GetPlayerName(src) .. "** bought a " .. itemInfo["label"] .. " for $"..price)
             else
                 QBCore.Functions.Notify(src, "You don't have enough cash..", "error")
@@ -2155,17 +2167,17 @@ RegisterNetEvent('inventory:server:SetInventoryData', function(fromInventory, to
 	elseif fromInventory == "crafting" then
 		local itemData = Config.CraftingItems[fromSlot]
 		if hasCraftItems(src, itemData.costs, fromAmount) then
-			TriggerClientEvent("inventory:client:CraftItems", src, itemData.name, itemData.costs, fromAmount, toSlot, itemData.points)
+			TriggerClientEvent("pappu-inventorynp:client:CraftItems", src, itemData.name, itemData.costs, fromAmount, toSlot, itemData.points)
 		else
-			TriggerClientEvent("inventory:client:UpdatePlayerInventory", src, true)
+			TriggerClientEvent("pappu-inventorynp:client:UpdatePlayerInventory", src, true)
 			TriggerClientEvent('QBCore:Notify', src, "You don't have the right items..", "error")
 		end
 	elseif fromInventory == "attachment_crafting" then
 		local itemData = Config.AttachmentCrafting[fromSlot]
 		if hasCraftItems(src, itemData.costs, fromAmount) then
-			TriggerClientEvent("inventory:client:CraftAttachment", src, itemData.name, itemData.costs, fromAmount, toSlot, itemData.points)
+			TriggerClientEvent("pappu-inventorynp:client:CraftAttachment", src, itemData.name, itemData.costs, fromAmount, toSlot, itemData.points)
 		else
-			TriggerClientEvent("inventory:client:UpdatePlayerInventory", src, true)
+			TriggerClientEvent("pappu-inventorynp:client:UpdatePlayerInventory", src, true)
 			TriggerClientEvent('QBCore:Notify', src, "You don't have the right items..", "error")
 		end
 	else
@@ -2237,7 +2249,7 @@ RegisterNetEvent('pappu-inventorynp:server:SaveStashItems', function(stashId, it
     })
 end)
 
-RegisterServerEvent("inventory:server:GiveItem", function(target, name, amount, slot)
+RegisterServerEvent("pappu-inventorynp:server:GiveItem", function(target, name, amount, slot)
     local src = source
     local Player = QBCore.Functions.GetPlayer(src)
 	target = tonumber(target)
@@ -2255,20 +2267,20 @@ RegisterServerEvent("inventory:server:GiveItem", function(target, name, amount, 
 		end
 		if RemoveItem(src, item.name, amount, item.slot) then
 			if AddItem(target, item.name, amount, false, item.info, item.created) then
-				TriggerClientEvent('inventory:client:ItemBox',target, QBCore.Shared.Items[item.name], "add", amount)
+				TriggerClientEvent('pappu-inventorynp:client:ItemBox',target, QBCore.Shared.Items[item.name], "add")
 				QBCore.Functions.Notify(target, "You Received "..amount..' '..item.label.." From "..Player.PlayerData.charinfo.firstname.." "..Player.PlayerData.charinfo.lastname)
-				TriggerClientEvent("inventory:client:UpdatePlayerInventory", target, true)
-				TriggerClientEvent('inventory:client:ItemBox',src, QBCore.Shared.Items[item.name], "remove", amount)
+				TriggerClientEvent("pappu-inventorynp:client:UpdatePlayerInventory", target, true)
+				TriggerClientEvent('pappu-inventorynp:client:ItemBox',src, QBCore.Shared.Items[item.name], "remove")
 				QBCore.Functions.Notify(src, "You gave " .. OtherPlayer.PlayerData.charinfo.firstname.." "..OtherPlayer.PlayerData.charinfo.lastname.. " " .. amount .. " " .. item.label .."!")
-				TriggerClientEvent("inventory:client:UpdatePlayerInventory", src, true)
+				TriggerClientEvent("pappu-inventorynp:client:UpdatePlayerInventory", src, true)
 				TriggerClientEvent('pappu-inventorynp:client:giveAnim', src)
 				TriggerClientEvent('pappu-inventorynp:client:giveAnim', target)
 			else
 				AddItem(src, item.name, amount, item.slot, item.info, item.created)
 				QBCore.Functions.Notify(src, "The other players inventory is full!", "error")
 				QBCore.Functions.Notify(target, "The other players inventory is full!", "error")
-				TriggerClientEvent("inventory:client:UpdatePlayerInventory", src, false)
-				TriggerClientEvent("inventory:client:UpdatePlayerInventory", target, false)
+				TriggerClientEvent("pappu-inventorynp:client:UpdatePlayerInventory", src, false)
+				TriggerClientEvent("pappu-inventorynp:client:UpdatePlayerInventory", target, false)
 			end
 		else
 			TriggerClientEvent('QBCore:Notify', src,  "You do not have enough of the item", "error")
@@ -2278,7 +2290,7 @@ RegisterServerEvent("inventory:server:GiveItem", function(target, name, amount, 
 	end
 end)
 
-RegisterNetEvent('inventory:server:snowball', function(action)
+RegisterNetEvent('pappu-inventorynp:server:snowball', function(action)
 	if action == "add" then
 		AddItem(source, "weapon_snowball")
 	elseif action == "remove" then
@@ -2292,7 +2304,7 @@ QBCore.Functions.CreateCallback('pappu-inventorynp:server:GetStashItems', functi
 	cb(GetStashItems(stashId))
 end)
 
-QBCore.Functions.CreateCallback('inventory:server:GetCurrentDrops', function(_, cb)
+QBCore.Functions.CreateCallback('pappu-inventorynp:server:GetCurrentDrops', function(_, cb)
 	cb(Drops)
 end)
 
@@ -2329,6 +2341,24 @@ QBCore.Functions.CreateCallback('QBCore:HasItem', function(source, cb, items, am
         end
     end
     cb(retval)
+end)
+
+
+Citizen.CreateThread(function()
+    if (GetCurrentResourceName() ~= "pappu-inventorynp") then 
+        print("[" .. GetCurrentResourceName() .. "] " .. "IMPORTANT: This resource must be named pappu-inventorynp for it to work properly!");
+        print("[" .. GetCurrentResourceName() .. "] " .. "IMPORTANT: This resource must be named pappu-inventorynp for it to work properly!");
+        print("[" .. GetCurrentResourceName() .. "] " .. "IMPORTANT: This resource must be named pappu-inventorynp for it to work properly!");
+        print("[" .. GetCurrentResourceName() .. "] " .. "IMPORTANT: This resource must be named pappu-inventorynp for it to work properly!");
+    end
+end)
+
+
+Citizen.CreateThread(function()
+    local resourceName = "^2 Pappu Started ("..GetCurrentResourceName()..")"
+    print("\n^1----------------------------------------------------------------------------------^7")
+    print(resourceName)
+    print("^1----------------------------------------------------------------------------------^7")
 end)
 
 -- command
@@ -2426,7 +2456,7 @@ QBCore.Commands.Add("randomitems", "Give Random Items (God Only)", {}, false, fu
 			amount = 1
 		end
 		if AddItem(source, randitem["name"], amount) then
-			TriggerClientEvent('inventory:client:ItemBox', source, QBCore.Shared.Items[randitem["name"]], 'add')
+			TriggerClientEvent('pappu-inventorynp:client:ItemBox', source, QBCore.Shared.Items[randitem["name"]], 'add')
             Wait(500)
 		end
 	end
@@ -2448,7 +2478,7 @@ end, 'admin')
 -- 	local Player = QBCore.Functions.GetPlayer(source)
 -- 	local itemData = Player.Functions.GetItemBySlot(item.slot)       -- --- DID THIS GET PUT ELSEWHERE?? IDK
 -- 	if Player.Functions.GetItemBySlot(item.slot) then
---         TriggerClientEvent("inventory:client:UseSnowball", source, itemData.amount)
+--         TriggerClientEvent("pappu-inventorynp:client:UseSnowball", source, itemData.amount)
 --     end
 -- end)
 
@@ -2510,7 +2540,7 @@ CreateThread(function()
 		for k, v in pairs(Drops) do
 			if v and (v.createdTime + Config.CleanupDropTime < os.time()) and not Drops[k].isOpen then
 				Drops[k] = nil
-				TriggerClientEvent("inventory:client:RemoveDropItem", -1, k)
+				TriggerClientEvent("pappu-inventorynp:client:RemoveDropItem", -1, k)
 			end
 		end
 		Wait(60 * 1000)
@@ -2520,24 +2550,42 @@ end)
 -- Decay System
 
 local TimeAllowed = 60 * 60 * 24 * 1 -- Maths for 1 day dont touch its very important and could break everything
+
 function ConvertQuality(item)
-	local StartDate = item.created
-    local DecayRate = QBCore.Shared.Items[item.name:lower()]["decay"] ~= nil and QBCore.Shared.Items[item.name:lower()]["decay"] or 0.0
+    local StartDate = tonumber(item.created)
+    local DecayRate = QBCore.Shared.Items[item.name:lower()]["decay"]
+    
     if DecayRate == nil then
-        DecayRate = 0
+        DecayRate = 0.0
     end
+    
     local TimeExtra = math.ceil((TimeAllowed * DecayRate))
+    
+    -- Debugging prints
+    print("StartDate: ", StartDate, "Type: ", type(StartDate))
+    print("DecayRate: ", DecayRate, "Type: ", type(DecayRate))
+    print("TimeExtra: ", TimeExtra, "Type: ", type(TimeExtra))
+    print("Current Time: ", os.time(), "Type: ", type(os.time()))
+
+    if StartDate == nil then
+        print("Error: StartDate is nil")
+        return 100 -- Default quality
+    end
+
     local percentDone = 100 - math.ceil((((os.time() - StartDate) / TimeExtra) * 100))
+    
     if DecayRate == 0 then
         percentDone = 100
     end
+    
     if percentDone < 0 then
         percentDone = 0
     end
+    
     return percentDone
 end
 
-QBCore.Functions.CreateCallback('inventory:server:ConvertQuality', function(source, cb, inventory, other)
+QBCore.Functions.CreateCallback('pappu-inventorynp:server:ConvertQuality', function(source, cb, inventory, other)
     local src = source
     local data = {}
     local Player = QBCore.Functions.GetPlayer(src)
@@ -2607,7 +2655,7 @@ QBCore.Functions.CreateCallback('inventory:server:ConvertQuality', function(sour
 				end
 			end
 			Trunks[uniqueId].items = other.inventory
-			TriggerClientEvent("inventory:client:UpdateOtherInventory", Player.PlayerData.source, other.inventory, false)
+			TriggerClientEvent("pappu-inventorynp:client:UpdateOtherInventory", Player.PlayerData.source, other.inventory, false)
 		elseif inventoryType == "glovebox" then
 			for _, item in pairs(other.inventory) do
 				if item.created then
@@ -2639,7 +2687,7 @@ QBCore.Functions.CreateCallback('inventory:server:ConvertQuality', function(sour
 				end
 			end
 			Gloveboxes[uniqueId].items = other.inventory
-			TriggerClientEvent("inventory:client:UpdateOtherInventory", Player.PlayerData.source, other.inventory, false)
+			TriggerClientEvent("pappu-inventorynp:client:UpdateOtherInventory", Player.PlayerData.source, other.inventory, false)
 		elseif inventoryType == "stash" then
 			for _, item in pairs(other.inventory) do
 				if item.created then
@@ -2674,11 +2722,11 @@ QBCore.Functions.CreateCallback('inventory:server:ConvertQuality', function(sour
 				end
 			end
 			Stashes[uniqueId].items = other.inventory
-			TriggerClientEvent("inventory:client:UpdateOtherInventory", Player.PlayerData.source, other.inventory, false)
+			TriggerClientEvent("pappu-inventorynp:client:UpdateOtherInventory", Player.PlayerData.source, other.inventory, false)
 		end
     end
     Player.Functions.SetInventory(inventory)
-    TriggerClientEvent("inventory:client:UpdatePlayerInventory", Player.PlayerData.source, false)
+    TriggerClientEvent("pappu-inventorynp:client:UpdatePlayerInventory", Player.PlayerData.source, false)
     data.inventory = inventory
     data.other = other
     cb(data)
@@ -2686,9 +2734,9 @@ end)
 
 -- Warning Messages
 
-RegisterNetEvent('inventory:server:addTrunkItems', function()
-	print('inventory:server:addTrunkItems has been deprecated please use exports[\'pappu-inventorynp\']:addTrunkItems(plate, items)')
+RegisterNetEvent('pappu-inventorynp:server:addTrunkItems', function()
+	print('pappu-inventorynp:server:addTrunkItems has been deprecated please use exports[\'pappu-inventorynp\']:addTrunkItems(plate, items)')
 end)
-RegisterNetEvent('inventory:server:addGloveboxItems', function()
-	print('inventory:server:addGloveboxItems has been deprecated please use exports[\'pappu-inventorynp\']:addGloveboxItems(plate, items)')
+RegisterNetEvent('pappu-inventorynp:server:addGloveboxItems', function()
+	print('pappu-inventorynp:server:addGloveboxItems has been deprecated please use exports[\'pappu-inventorynp\']:addGloveboxItems(plate, items)')
 end)
