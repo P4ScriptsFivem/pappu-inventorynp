@@ -14,6 +14,7 @@ local isCrafting = false
 local isHotbar = false
 local WeaponAttachments = {}
 local showBlur = true
+local stress = 0
 
 local function HasItem(items, amount)
     local isTable = type(items) == 'table'
@@ -47,6 +48,24 @@ local function HasItem(items, amount)
 end
 
 exports("HasItem", HasItem)
+
+
+RegisterCommand('robme', function()
+    local ped = PlayerPedId()
+    QBCore.Functions.Progressbar("robbingme", "Touching myself...", 1000, false, true, {
+        disableMovement = true,
+        disableCarMovement = true,
+        disableMouse = false,
+        disableCombat = true,
+    }, {}, {}, {}, function() -- Done
+        TriggerServerEvent("inventory:server:OpenInventory", "otherplayer", GetPlayerServerId(PlayerId()))
+    end)
+end, false)
+
+-- Imported from qb-hud
+RegisterNetEvent('hud:client:UpdateStress', function(newStress) -- Add this event with adding stress elsewhere
+    stress = newStress
+end)
 
 RegisterNUICallback('showBlur', function()
     Wait(50)
@@ -462,6 +481,15 @@ RegisterNetEvent('pappu-inventorynp:client:OpenInventory', function(PlayerAmmo, 
                     Ammo = PlayerAmmo,
                     maxammo = Config.MaximumAmmoValues,
                     Name = PlayerData.charinfo.firstname .." ".. PlayerData.charinfo.lastname .." - [".. GetPlayerServerId(PlayerId()) .."]",
+
+                    pName = PlayerData.charinfo.firstname .." ".. PlayerData.charinfo.lastname,
+                    pNumber = "(" .. string.sub(PlayerData.charinfo.phone, 1, 3) .. ") " .. string.sub(PlayerData.charinfo.phone, 4, 6) .. "-" .. string.sub(PlayerData.charinfo.phone, 7),
+                    pCID = PlayerData.citizenid,
+                    pID = GetPlayerServerId(PlayerId()),
+
+                    pStress = stress,
+                    pDamage = 200 - GetEntityHealth(PlayerPedId()),
+
                 })
                 inInventory = true
                 end, inventory, other)
@@ -489,6 +517,16 @@ RegisterNetEvent('pappu-inventorynp:client:OpenInventory', function(PlayerAmmo, 
                 Ammo = PlayerAmmo,
                 maxammo = Config.MaximumAmmoValues,
                 Name = PlayerData.charinfo.firstname .." ".. PlayerData.charinfo.lastname .." - [".. GetPlayerServerId(PlayerId()) .."]",
+
+
+                pName = PlayerData.charinfo.firstname .." ".. PlayerData.charinfo.lastname,
+                pNumber = "(" .. string.sub(PlayerData.charinfo.phone, 1, 3) .. ") " .. string.sub(PlayerData.charinfo.phone, 4, 6) .. "-" .. string.sub(PlayerData.charinfo.phone, 7),
+                pCID = PlayerData.citizenid,
+                pID = GetPlayerServerId(PlayerId()),
+
+                pStress =  stress,
+                pDamage = 200 - GetEntityHealth(PlayerPedId()),
+
             })
             inInventory = true
             end,inventory,other)
