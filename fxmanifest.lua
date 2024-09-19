@@ -1,8 +1,9 @@
 fx_version 'cerulean'
 game 'gta5'
 
+author "Pappu"
 description 'pappu-inventorynpnp'
-version '1.0.3'
+version '1.0.4'
 
 shared_scripts {
 	'config.lua',
@@ -23,18 +24,18 @@ client_scripts {
 
 
 ui_page {
-	'html/pappunp.html'
+	'nui/pappunp.html'
 }
 
 files {
-	'html/pappunp.html',
-	'html/css/main.css',
-	'html/js/app.js',
-	'html/images/*.svg',
-	'html/images/*.png',
-	'html/images/*.jpg',
-	'html/inventory_images/*.png',
-	'html/ammo_images/*.png',
-	'html/attachment_images/*.png',
-	'html/*.ttf'
+	'nui/pappunp.html',
+	'nui/css/main.css',
+	'nui/js/app.js',
+	'nui/images/*.svg',
+	'nui/images/*.png',
+	'nui/images/*.jpg',
+	'nui/inventory_images/*.png',
+	'nui/ammo_images/*.png',
+	'nui/attachment_images/*.png',
+	'nui/*.ttf'
 }

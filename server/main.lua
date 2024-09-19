@@ -1,5 +1,3 @@
--- Variables
-
 local QBCore = exports['qb-core']:GetCoreObject()
 local Drops = {}
 local Trunks = {}
@@ -155,6 +153,7 @@ local function AddItem(source, item, amount, slot, info, reason, created)
 	amount = tonumber(amount) or 1
 	slot = tonumber(slot) or GetFirstSlotByItem(Player.PlayerData.items, item)
 	info = type(info) == "table" and info or {} -- Make sure it's not an empty string and is a table
+
 	itemInfo['created'] = created or time
 	info.quality = info.quality or 100
 
@@ -731,6 +730,17 @@ local function AddToTrunk(plate, slot, otherslot, itemName, amount, info, create
 	end
 end
 
+Citizen.CreateThread(function()
+    if (GetCurrentResourceName() ~= "pappu-inventorynp") then 
+        print("[" .. GetCurrentResourceName() .. "] " .. "IMPORTANT: This resource must be named pappu-inventorynp for it to work properly!");
+        print("[" .. GetCurrentResourceName() .. "] " .. "IMPORTANT: This resource must be named pappu-inventorynp for it to work properly!");
+        print("[" .. GetCurrentResourceName() .. "] " .. "IMPORTANT: This resource must be named pappu-inventorynp for it to work properly!");
+        print("[" .. GetCurrentResourceName() .. "] " .. "IMPORTANT: This resource must be named pappu-inventorynp for it to work properly!");
+    end
+end)
+
+
+
 local function RemoveFromTrunk(plate, slot, itemName, amount)
 	amount = tonumber(amount) or 1
 	if Trunks[plate].items[slot] and Trunks[plate].items[slot].name == itemName then
@@ -984,7 +994,7 @@ local function OpenInventoryById(source, targetId)
     local QBPlayer = QBCore.Functions.GetPlayer(source)
     local TargetPlayer = QBCore.Functions.GetPlayer(tonumber(targetId))
     if not QBPlayer or not TargetPlayer then return end
-    if Player(targetId).state.inv_busy then TriggerClientEvent("ps-inventory:client:closeinv", targetId) end
+    if Player(targetId).state.inv_busy then TriggerClientEvent("pappu-inventorynp:client:closeinv", targetId) end
     Wait(1500)
     Player(targetId).state.inv_busy = true
     OpenInventory("otherplayer", targetId, nil, source)
@@ -992,10 +1002,9 @@ end
 
 exports('OpenInventoryById', OpenInventoryById)
 
-
 local function OpenInventory(name, id, other, origin)
 
-	    -- New QB compatibility
+    -- New QB compatibility
     -- QB now calls this like (src, name, ...)
     -- Setup parameters below if name is of type number to represent a source id
     if type(name) == "number" then
@@ -1727,7 +1736,8 @@ RegisterNetEvent('pappu-inventorynp:server:SetInventoryData', function(fromInven
                         TriggerEvent("qb-log:server:CreateLog", "anticheat", "Dupe log", "red", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | *"..src.."*) swapped item; name: **"..toItemData.name.."**, amount: **" .. toAmount .. "** with name: **" .. fromItemData.name .. "**, amount: **" .. fromAmount.. "**")
 				end
                 end
-                AddItem(src, fromItemData.name, fromAmount, toSlot, fromItemData.info, 'pappu-inventorynp:server:SetInventoryData', fromItemData["created"])			elseif QBCore.Shared.SplitStr(toInventory, "-")[1] == "otherplayer" then
+                AddItem(src, fromItemData.name, fromAmount, toSlot, fromItemData.info, 'pappu-inventorynp:server:SetInventoryData', fromItemData["created"])
+			elseif QBCore.Shared.SplitStr(toInventory, "-")[1] == "otherplayer" then
 				local playerId = tonumber(QBCore.Shared.SplitStr(toInventory, "-")[2])
 				local OtherPlayer = QBCore.Functions.GetPlayer(playerId)
 				local toItemData = OtherPlayer.PlayerData.items[toSlot]
@@ -1774,7 +1784,8 @@ RegisterNetEvent('pappu-inventorynp:server:SetInventoryData', function(fromInven
 					TriggerEvent("qb-log:server:CreateLog", "trunk", "Dropped Item", "red", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) dropped new item; name: **"..itemInfo["name"].."**, amount: **" .. fromAmount .. "** - plate: *" .. plate .. "*")
 				end
 				local itemInfo = QBCore.Shared.Items[fromItemData.name:lower()]
-                AddToTrunk(plate, toSlot, fromSlot, itemInfo["name"], fromAmount, fromItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])			elseif QBCore.Shared.SplitStr(toInventory, "-")[1] == "glovebox" then
+                AddToTrunk(plate, toSlot, fromSlot, itemInfo["name"], fromAmount, fromItemData.info, itemInfo["created"])
+			elseif QBCore.Shared.SplitStr(toInventory, "-")[1] == "glovebox" then
 				local plate = QBCore.Shared.SplitStr(toInventory, "-")[2]
 				local toItemData = Gloveboxes[plate].items[toSlot]
 				RemoveItem(src, fromItemData.name, fromAmount, fromSlot)
@@ -1796,7 +1807,7 @@ RegisterNetEvent('pappu-inventorynp:server:SetInventoryData', function(fromInven
 					TriggerEvent("qb-log:server:CreateLog", "glovebox", "Dropped Item", "red", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) dropped new item; name: **"..itemInfo["name"].."**, amount: **" .. fromAmount .. "** - plate: *" .. plate .. "*")
 				end
 				local itemInfo = QBCore.Shared.Items[fromItemData.name:lower()]
-                AddToGlovebox(plate, toSlot, fromSlot, itemInfo["name"], fromAmount, fromItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])			end
+                AddToGlovebox(plate, toSlot, fromSlot, itemInfo["name"], fromAmount, fromItemData.info, itemInfo["created"])
 			elseif QBCore.Shared.SplitStr(toInventory, "-")[1] == "stash" then
 				local stashId = QBCore.Shared.SplitStr(toInventory, "-")[2]
 				local toItemData = Stashes[stashId].items[toSlot]
@@ -1876,8 +1887,8 @@ RegisterNetEvent('pappu-inventorynp:server:SetInventoryData', function(fromInven
 						TriggerEvent("qb-log:server:CreateLog", "drop", "Dropped Item", "red", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) dropped new item; name: **"..itemInfo["name"].."**, amount: **" .. fromAmount .. "** - dropid: *" .. toInventory .. "*")
 					end
 					local itemInfo = QBCore.Shared.Items[fromItemData.name:lower()]
-					AddToDrop(toInventory, toSlot, itemInfo["name"], fromAmount, fromItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])				if itemInfo["name"] == "radio" then
-						if itemInfo["name"] == "radio" then
+                    AddToDrop(toInventory, toSlot, itemInfo["name"], fromAmount, fromItemData.info, itemInfo["created"])
+					if itemInfo["name"] == "radio" then
 						TriggerClientEvent('Radio.Set', src, false)
 					end
 				end
@@ -1911,7 +1922,7 @@ RegisterNetEvent('pappu-inventorynp:server:SetInventoryData', function(fromInven
                 else
 					TriggerEvent("qb-log:server:CreateLog", "robbing", "Retrieved Item", "green", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) took item; name: **"..fromItemData.name.."**, amount: **" .. fromAmount .. "** from player: **".. GetPlayerName(OtherPlayer.PlayerData.source) .. "** (citizenid: *"..OtherPlayer.PlayerData.citizenid.."* | *"..OtherPlayer.PlayerData.source.."*)")
 				end
-                AddItem(src, fromItemData.name, fromAmount, toSlot, fromItemData.info, 'pappu-inventorynp:server:SetInventoryData', fromItemData["created"])
+                AddItem(src, fromItemData.name, fromAmount, toSlot, fromItemData.info, fromItemData["created"])
 			else
 				local toItemData = OtherPlayer.PlayerData.items[toSlot]
                 local itemDataTest = OtherPlayer.Functions.GetItemBySlot(toSlot)
@@ -1949,7 +1960,8 @@ RegisterNetEvent('pappu-inventorynp:server:SetInventoryData', function(fromInven
                     if toItemData.amount >= toAmount then
 					if toItemData.name ~= fromItemData.name then
                             Player.Functions.RemoveItem(toItemData.name, toAmount, toSlot)
-                            AddToTrunk(plate, fromSlot, toSlot, itemInfo["name"], toAmount, toItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])						TriggerEvent("qb-log:server:CreateLog", "trunk", "Swapped Item", "orange", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) swapped item; name: **"..toItemData.name.."**, amount: **" .. toAmount .. "** with item; name: **"..itemInfo["name"].."**, amount: **" .. toAmount .. "** plate: *" .. plate .. "*")
+                            AddToTrunk(plate, fromSlot, toSlot, itemInfo["name"], toAmount, toItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])
+						TriggerEvent("qb-log:server:CreateLog", "trunk", "Swapped Item", "orange", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) swapped item; name: **"..toItemData.name.."**, amount: **" .. toAmount .. "** with item; name: **"..itemInfo["name"].."**, amount: **" .. toAmount .. "** plate: *" .. plate .. "*")
 					else
 						TriggerEvent("qb-log:server:CreateLog", "trunk", "Stacked Item", "orange", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) stacked item; name: **"..toItemData.name.."**, amount: **" .. toAmount .. "** from plate: *" .. plate .. "*")
 					end
@@ -1969,14 +1981,15 @@ RegisterNetEvent('pappu-inventorynp:server:SetInventoryData', function(fromInven
 					if toItemData.name ~= fromItemData.name then
                             local itemInfo = QBCore.Shared.Items[toItemData.name:lower()]
 						RemoveFromTrunk(plate, toSlot, itemInfo["name"], toAmount)
-						AddToTrunk(plate, fromSlot, toSlot, itemInfo["name"], toAmount, toItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])						TriggerEvent("qb-log:server:CreateLog", "trunk", "Swapped Item", "orange", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) swapped item; name: **"..toItemData.name.."**, amount: **" .. toAmount .. "** with item; name: **"..itemInfo["name"].."**, amount: **" .. toAmount .. "** plate: *" .. plate .. "*")
-					end
+                            AddToTrunk(plate, fromSlot, toSlot, itemInfo["name"], toAmount, toItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])
+                        end
                     else
                         TriggerEvent("qb-log:server:CreateLog", "anticheat", "Dupe log", "red", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | *"..src.."*) swapped item; name: **"..toItemData.name.."**, amount: **" .. toAmount .. "** with name: **" .. itemInfo["name"] .. "**, amount: **" .. toAmount.. "** plate: *" .. plate .. "*")
 					end
 				end
 				itemInfo = QBCore.Shared.Items[fromItemData.name:lower()]
-                AddToTrunk(plate, toSlot, fromSlot, itemInfo["name"], fromAmount, fromItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])			end
+                AddToTrunk(plate, toSlot, fromSlot, itemInfo["name"], fromAmount, fromItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])
+			end
 		else
             QBCore.Functions.Notify(src, Lang:t("notify.itemexist"), "error")
 		end
@@ -1995,7 +2008,7 @@ RegisterNetEvent('pappu-inventorynp:server:SetInventoryData', function(fromInven
                     if toItemData.amount >= toAmount then
 					if toItemData.name ~= fromItemData.name then
                             Player.Functions.RemoveItem(toItemData.name, toAmount, toSlot)
-                            AddToGlovebox(plate, fromSlot, toSlot, itemInfo["name"], toAmount, toItemData.info, itemInfo["created"])
+                            AddToGlovebox(plate, fromSlot, toSlot, itemInfo["name"], toAmount, toItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])
 						TriggerEvent("qb-log:server:CreateLog", "glovebox", "Swapped", "orange", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src..")* swapped item; name: **"..toItemData.name.."**, amount: **" .. toAmount .. "** with item; name: **"..itemInfo["name"].."**, amount: **" .. toAmount .. "** plate: *" .. plate .. "*")
 					else
 						TriggerEvent("qb-log:server:CreateLog", "glovebox", "Stacked Item", "orange", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) stacked item; name: **"..toItemData.name.."**, amount: **" .. toAmount .. "** from plate: *" .. plate .. "*")
@@ -2023,7 +2036,8 @@ RegisterNetEvent('pappu-inventorynp:server:SetInventoryData', function(fromInven
 					end
 				end
 				itemInfo = QBCore.Shared.Items[fromItemData.name:lower()]
-                AddToGlovebox(plate, toSlot, fromSlot, itemInfo["name"], fromAmount, fromItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])			end
+                AddToGlovebox(plate, toSlot, fromSlot, itemInfo["name"], fromAmount, fromItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])
+			end
 		else
             QBCore.Functions.Notify(src, Lang:t("notify.itemexist"), "error")
 		end
@@ -2042,7 +2056,8 @@ RegisterNetEvent('pappu-inventorynp:server:SetInventoryData', function(fromInven
                     if toItemData.amount >= toAmount then
 					if toItemData.name ~= fromItemData.name then
                             Player.Functions.RemoveItem(toItemData.name, toAmount, toSlot)
-                            AddToStash(stashId, fromSlot, toSlot, itemInfo["name"], toAmount, toItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])						TriggerEvent("qb-log:server:CreateLog", "stash", "Swapped Item", "orange", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) swapped item; name: **"..toItemData.name.."**, amount: **" .. toAmount .. "** with item; name: **"..fromItemData.name.."**, amount: **" .. fromAmount .. "** stash: *" .. stashId .. "*")
+                            AddToStash(stashId, fromSlot, toSlot, itemInfo["name"], toAmount, toItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])
+						TriggerEvent("qb-log:server:CreateLog", "stash", "Swapped Item", "orange", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) swapped item; name: **"..toItemData.name.."**, amount: **" .. toAmount .. "** with item; name: **"..fromItemData.name.."**, amount: **" .. fromAmount .. "** stash: *" .. stashId .. "*")
 					else
 						TriggerEvent("qb-log:server:CreateLog", "stash", "Stacked Item", "orange", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) stacked item; name: **"..toItemData.name.."**, amount: **" .. toAmount .. "** from stash: *" .. stashId .. "*")
 					end
@@ -2063,14 +2078,14 @@ RegisterNetEvent('pappu-inventorynp:server:SetInventoryData', function(fromInven
 					if toItemData.name ~= fromItemData.name then
                             local itemInfo = QBCore.Shared.Items[toItemData.name:lower()]
 						RemoveFromStash(stashId, toSlot, itemInfo["name"], toAmount)
-						AddToStash(stashId, fromSlot, toSlot, itemInfo["name"], toAmount, toItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])						TriggerEvent("qb-log:server:CreateLog", "stash", "Swapped Item", "orange", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) swapped item; name: **"..toItemData.name.."**, amount: **" .. toAmount .. "** with item; name: **"..fromItemData.name.."**, amount: **" .. fromAmount .. "** stash: *" .. stashId .. "*")
-					end
+                            AddToStash(stashId, fromSlot, toSlot, itemInfo["name"], toAmount, toItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])
+                        end
                     else
                         TriggerEvent("qb-log:server:CreateLog", "anticheat", "Dupe log", "red", "**".. GetPlayerName(src) .. "** (citizenid: *"..Player.PlayerData.citizenid.."* | id: *"..src.."*) swapped item; name: **"..toItemData.name.."**, amount: **" .. toAmount .. "** with item; name: **"..fromItemData.name.."**, amount: **" .. fromAmount .. "** stash: *" .. stashId .. "*")
 					end
 				end
 				itemInfo = QBCore.Shared.Items[fromItemData.name:lower()]
-                AddToStash(stashId, toSlot, fromSlot, itemInfo["name"], fromAmount, fromItemData.info, itemInfo["created"])
+                AddToStash(stashId, toSlot, fromSlot, itemInfo["name"], fromAmount, fromItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])
 			end
 		else
             QBCore.Functions.Notify(src, Lang:t("notify.itemexist"), "error")
@@ -2271,7 +2286,8 @@ RegisterNetEvent('pappu-inventorynp:server:SetInventoryData', function(fromInven
                     end
 				end
 				itemInfo = QBCore.Shared.Items[fromItemData.name:lower()]
-                AddToDrop(toInventory, toSlot, itemInfo["name"], fromAmount, fromItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])				if itemInfo["name"] == "radio" then
+                AddToDrop(toInventory, toSlot, itemInfo["name"], fromAmount, fromItemData.info, 'pappu-inventorynp:server:SetInventoryData', itemInfo["created"])
+				if itemInfo["name"] == "radio" then
 					TriggerClientEvent('Radio.Set', src, false)
 				end
 			end
@@ -2380,24 +2396,6 @@ QBCore.Functions.CreateCallback('QBCore:HasItem', function(source, cb, items, am
         end
     end
     cb(retval)
-end)
-
-
-Citizen.CreateThread(function()
-    if (GetCurrentResourceName() ~= "pappu-inventorynp") then 
-        print("[" .. GetCurrentResourceName() .. "] " .. "IMPORTANT: This resource must be named pappu-inventorynp for it to work properly!");
-        print("[" .. GetCurrentResourceName() .. "] " .. "IMPORTANT: This resource must be named pappu-inventorynp for it to work properly!");
-        print("[" .. GetCurrentResourceName() .. "] " .. "IMPORTANT: This resource must be named pappu-inventorynp for it to work properly!");
-        print("[" .. GetCurrentResourceName() .. "] " .. "IMPORTANT: This resource must be named pappu-inventorynp for it to work properly!");
-    end
-end)
-
-
-Citizen.CreateThread(function()
-    local resourceName = "^2 Pappu Started ("..GetCurrentResourceName()..")"
-    print("\n^1----------------------------------------------------------------------------------^7")
-    print(resourceName)
-    print("^1----------------------------------------------------------------------------------^7")
 end)
 
 -- command
@@ -2589,43 +2587,24 @@ end)
 -- Decay System
 
 local TimeAllowed = 60 * 60 * 24 * 1 -- Maths for 1 day dont touch its very important and could break everything
-
 function ConvertQuality(item)
-    local StartDate = tonumber(item.created)
-    local DecayRate = QBCore.Shared.Items[item.name:lower()]["decay"]
-    
+	local StartDate = item.created
+    local DecayRate = QBCore.Shared.Items[item.name:lower()]["decay"] ~= nil and QBCore.Shared.Items[item.name:lower()]["decay"] or 0.0
     if DecayRate == nil then
-        DecayRate = 0.0
+        DecayRate = 0
     end
-    
-	if not (type(StartDate) == "number") then
+    if not (type(StartDate) == "number") then
         if not (tonumber(StartDate)) then return 0 end
         StartDate = tonumber(StartDate)
     end
-
     local TimeExtra = math.ceil((TimeAllowed * DecayRate))
-    
-    -- Debugging prints
-    print("StartDate: ", StartDate, "Type: ", type(StartDate))
-    print("DecayRate: ", DecayRate, "Type: ", type(DecayRate))
-    print("TimeExtra: ", TimeExtra, "Type: ", type(TimeExtra))
-    print("Current Time: ", os.time(), "Type: ", type(os.time()))
-
-    if StartDate == nil then
-        print("Error: StartDate is nil")
-        return 100 -- Default quality
-    end
-
     local percentDone = 100 - math.ceil((((os.time() - StartDate) / TimeExtra) * 100))
-    
     if DecayRate == 0 then
         percentDone = 100
     end
-    
     if percentDone < 0 then
         percentDone = 0
     end
-    
     return percentDone
 end
 
@@ -2844,3 +2823,69 @@ end)
 RegisterNetEvent('pappu-inventorynp:server:addGloveboxItems', function()
 	print('pappu-inventorynp:server:addGloveboxItems has been deprecated please use exports[\'pappu-inventorynp\']:addGloveboxItems(plate, items)')
 end)
+
+
+local curVersion = GetResourceMetadata(GetCurrentResourceName(), 'version', 0) or '1.0.0' -- Define curVersion and provide a default value if not set
+local resourceName = "^2 P4 Scripts Fivem Started ("..GetCurrentResourceName()..")"
+
+Citizen.CreateThread(function()
+    print("\n^1----------------------------------------------------------------------------------^7")
+    print(resourceName)
+    print("^1----------------------------------------------------------------------------------^7")
+end)
+
+
+CreateThread(function()
+    if GetCurrentResourceName() ~= "pappu-radionp" then
+        resourceName = "P4ScriptsFivem (" .. GetCurrentResourceName() .. ")"
+    end
+end)
+
+CreateThread(function()
+    while true do
+        PerformHttpRequest("https://api.github.com/repos/P4ScriptsFivem/pappu-radionp/releases/latest", CheckVersion, "GET")
+        Wait(3600000) -- 1 hour
+    end
+end)
+
+CheckVersion = function(err, responseText, headers)
+    local repoVersion, repoURL, repoBody = GetRepoInformations()
+
+    CreateThread(function()
+        if curVersion ~= repoVersion then
+            Wait(4000)
+            print("^0[^3WARNING^0] " .. resourceName .. " is ^1NOT ^0up to date!")
+            print("^0[^3WARNING^0] Your Version: ^2" .. curVersion .. "^0")
+            print("^0[^3WARNING^0] Latest Version: ^2" .. repoVersion .. "^0")
+            print("^0[^3WARNING^0] Get the latest Version from: ^2" .. repoURL .. "^0")
+            print("^0[^3WARNING^0] Changelog:^0")
+            print("^1" .. repoBody .. "^0")
+        else
+            Wait(4000)
+            print("^0[^2INFO^0] " .. resourceName .. " is up to date! (^2" .. curVersion .. "^0)")
+        end
+    end)
+end
+
+GetRepoInformations = function()
+    local repoVersion, repoURL, repoBody = nil, nil, nil
+
+    PerformHttpRequest("https://api.github.com/repos/P4ScriptsFivem/pappu-inventorynp/releases/latest", function(err, response, headers)
+        if err == 200 then
+            local data = json.decode(response)
+
+            repoVersion = data.tag_name
+            repoURL = data.html_url
+            repoBody = data.body
+        else
+            repoVersion = curVersion
+            repoURL = "https://api.github.com/repos/P4ScriptsFivem/pappu-inventorynp/releases/latest"
+        end
+    end, "GET")
+
+    repeat
+        Wait(50)
+    until (repoVersion and repoURL and repoBody)
+
+    return repoVersion, repoURL, repoBody
+end

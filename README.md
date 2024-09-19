@@ -26,7 +26,7 @@ Manual
 * Make sure you have the latest update of [qb-weapons](https://github.com/qbcore-framework/qb-weapons)
 * Drag `pappu-inventorynp` into your resources folder or any subfolder
 * Make sure that the folder is named `pappu-inventorynp` and **not** `pappu-inventorynp-main`
-* Replace all occurrences of `qb-inventory` with `pappu-inventorynp`.<br>The example below uses Visual Studio Code to replace all instances.
+* Replace all occurrences of `pappu-inventorynp` with `pappu-inventorynp`.<br>The example below uses Visual Studio Code to replace all instances.
 
 
 
